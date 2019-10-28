@@ -18,6 +18,9 @@ module.exports = {
     // The fields which we want to index the labels associated with their values
     self.indexFieldLabels = self.options.indexFieldLabels;
 
+    // The type field to be indexed separately
+    self.indexTypeFields = self.options.indexTypeFields;
+
     self.apos.define('apostrophe-cursor', require('./lib/cursor.js'));
     self.connect = function(callback) {
       self.baseName = self.options.baseName || self.apos.shortName;
@@ -83,7 +86,6 @@ module.exports = {
             body[field + 'ESExact'] = doc[field];
           }
           // If indexing labels for select and fields is desired.
-          // Indexing checkboxes fields is not supported yet.
           if (self.indexFieldLabels && doc[field] && self.indexFieldLabels.includes(field)) {
             const mgr = self.apos.docs.getManager(doc.type);
             if (mgr) {
@@ -107,6 +109,16 @@ module.exports = {
                     }
                   }
                 }
+              }
+            }
+          }
+          const docType = doc.type;
+          if (self.indexTypeFields && self.indexTypeFields[docType]) {
+            const typeField = self.indexTypeFields[docType][field];
+            if (typeField) {
+              body[typeField.indexField] = body[field];
+              if (body[field + 'ESExact']) {
+                body[typeField.indexField + 'ESExact'] = body[field + 'ESExact'];
               }
             }
           }
